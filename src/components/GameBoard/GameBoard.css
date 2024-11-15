@@ -1,0 +1,245 @@
+.game-board-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.chess-board {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    width: min(90vw, 90vh);
+    height: min(90vw, 90vh);
+    border: 2px solid #333;
+}
+
+.square {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.light-square {
+    background-color: #dceaf0;
+}
+
+.dark-square {
+    background-color: #3a506b;
+}
+
+.selected {
+    border: 2px solid yellow;
+    box-sizing: border-box;
+}
+
+/* Добавляем стиль для клеток, куда можно пойти */
+.highlighted-circle::after {
+    content: "";
+    width: 15px;
+    height: 15px;
+    background-color: rgba(255, 215, 0, 0.7);
+    /* Полупрозрачный золотой цвет */
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    /* Отключаем события для кружка */
+}
+
+.top-info-container,
+.bottom-info-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 10px 0;
+    width: 100%;
+}
+
+.avatar-container {
+    display: flex;
+    align-items: center;
+}
+
+.avatar-container img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.user-info-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 14px;
+    margin-right: auto;
+}
+
+.user-nickname {
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.user-rank {
+    font-size: 12px;
+    color: #cccccc;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.timer-container {
+    background-color: #333333;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 5px;
+    padding: 5px 10px;
+    text-align: center;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.action-buttons button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #3a506b;
+    color: #ffffff;
+    transition: background-color 0.3s;
+}
+
+.action-buttons button:hover {
+    background-color: #546a8a;
+}
+
+
+/* Кнопка с тремя точками */
+.three-dots-button {
+    font-size: 24px;
+    background: none;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    padding: 8px;
+}
+
+/* Задний фон для замыливания */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9;
+}
+
+/* Центрированное модальное окно */
+.modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #333;
+    padding: 20px;
+    border-radius: 8px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-content button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #3a506b;
+    color: #ffffff;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+
+.modal-content button:hover {
+    background-color: #546a8a;
+}
+
+/* Стили для кнопки "Продолжить" */
+.continue-button {
+    background-color: #4caf50;
+    /* Зеленый цвет для кнопки "Продолжить" */
+}
+
+.continue-button:hover {
+    background-color: #66bb6a;
+}
+
+
+
+
+
+
+/* Стили для уведомления об истечении времени */
+.timeout-modal .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9;
+}
+
+.timeout-modal .modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #333;
+    padding: 20px;
+    border-radius: 8px;
+    color: white;
+    text-align: center;
+    z-index: 10;
+}
+
+.timeout-modal .modal-content button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #ff6347;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.timeout-modal .modal-content button:hover {
+    background-color: #ff856d;
+}

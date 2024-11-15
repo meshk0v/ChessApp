@@ -1,0 +1,45 @@
+.bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #212121;
+    border-top-left-radius: 15px;
+    /* Округление верхних левых углов */
+    border-top-right-radius: 15px;
+    /* Округление верхних правых углов */
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.3);
+    /* Тень для эффекта подъема */
+    z-index: 1000;
+    /* Убедитесь, что панель находится поверх других элементов */
+}
+
+.nav-item {
+    color: rgba(255, 255, 255, 0.7);
+    /* Светло-серый цвет для текста и иконок */
+    text-decoration: none;
+    font-size: 14px;
+    /* Размер текста */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Центрирование иконок */
+    transition: color 0.3s, transform 0.3s;
+    /* Плавный переход цвета и трансформации */
+    height: 50px;
+    /* Увеличиваем высоту кнопок */
+    padding: 5px;
+    /* Добавляем немного внутреннего отступа */
+}
+
+.nav-item svg {
+    width: 24px;
+    /* Размер иконок */
+    height: 24px;
+    margin-bottom: 4px;
+    /* Отступ между иконкой и текстом */
+    transition: fill 0.3s;
+    /* Плавный переход цвета иконок */
+}

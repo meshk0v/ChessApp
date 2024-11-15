@@ -1,0 +1,12 @@
+/* src/components/Leaderboard.css */
+
+.leaderboard-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    /* Высота 100% экрана */
+    background-color: #1c1f21;
+        /* background: linear-gradient(135deg, #0a0b0d, #1c1f21); */
+    /* Градиент фона */
+}

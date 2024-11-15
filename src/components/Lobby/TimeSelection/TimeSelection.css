@@ -1,0 +1,29 @@
+.styled-button-time {
+    background-color: #0088cc;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 16px;
+    margin: 5px;
+    /* Уменьшаем отступ между кнопками */
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
+    box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+    opacity: 0;
+    /* Начальная прозрачность */
+    transform: translateY(10px);
+    /* Начальное положение вниз */
+    animation: slideIn 0.2s ease-in-out forwards;
+    /* Применяем анимацию с плавным эффектом */
+}
+
+.time-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin-top: -50px;
+}

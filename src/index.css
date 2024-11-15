@@ -1,13 +1,20 @@
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+    font-family: 'Montserrat', sans-serif;
+  }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* index.css или App.css */
+body {
+  overflow: hidden;
+  /* Отключает прокрутку */
+  height: 100vh;
+  /* Задает высоту в 100% экрана */
+  margin: 0;
+  /* Убирает отступы по умолчанию */
+  padding: 0;
+  /* Убирает внутренние отступы по умолчанию */
 }
