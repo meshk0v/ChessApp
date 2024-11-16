@@ -12,7 +12,6 @@ const Lobby = ({ setBottomNavVisible }) => {
   const [playerJoined, setPlayerJoined] = useState(sessionStorage.getItem('playerJoined') === 'true');
   const [invitationLink, setInvitationLink] = useState('');
   const [waitingMessage, setWaitingMessage] = useState('');
-  const [isGameStarted, setIsGameStarted] = useState(false);
   const [showTimeSelection, setShowTimeSelection] = useState(false);
   const [color, setColor] = useState('white');
   const [isRandomGame, setIsRandomGame] = useState(false);
@@ -36,7 +35,6 @@ const Lobby = ({ setBottomNavVisible }) => {
     setPlayerJoined(false);
     setWaitingMessage('');
     setInvitationLink('');
-    setIsGameStarted(false);
     setIsRandomGame(false);
     setIsWaitingForOpponent(false);
     setShowTimeSelection(false);
@@ -46,14 +44,13 @@ const Lobby = ({ setBottomNavVisible }) => {
 
   const joinRandomGame = (time) => {
     setIsWaitingForOpponent(true);
-    setWaitingMessage('Ожидание соперника...');
+    setWaitingMessage('Waiting for opponent...');
     socket.emit('findRandomGame', { time, userId });
   };
 
   // Устанавливаем обработчики событий сокета
   useEffect(() => {
     socket.on('startGame', (data) => {
-      setIsGameStarted(true);
       window.Telegram.WebApp.BackButton.show();
       setColor(data.color);
       setGameId(data.gameId);
@@ -70,10 +67,6 @@ const Lobby = ({ setBottomNavVisible }) => {
       sessionStorage.setItem('playerJoined', 'true');
       sessionStorage.setItem('gameId', data.gameId);
       setIsWaitingForOpponent(false);
-    });
-
-    socket.on('gameStart', () => {
-      setIsGameStarted(true);
     });
 
     socket.on('opponentDisconnected', (data) => {
@@ -136,7 +129,6 @@ const Lobby = ({ setBottomNavVisible }) => {
     const id = `game_${Math.random().toString(36).substr(2, 9)}`;
     setGameId(id);
     sessionStorage.setItem('gameId', id);
-    setIsGameStarted(true);
     setIsRandomGame(isRandom);
     socket.emit('createGame', { id, time, userId });
 
@@ -172,7 +164,7 @@ const Lobby = ({ setBottomNavVisible }) => {
 
 
     setIsWaitingForOpponent(true);
-    setWaitingMessage('Ожидание соперника...');
+    setWaitingMessage('Waiting for opponent...');
     socket.emit('joinGame', { gameId: id, userId });
   };
 
