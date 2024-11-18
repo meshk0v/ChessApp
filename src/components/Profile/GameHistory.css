@@ -1,0 +1,94 @@
+.game-history-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
+    background: linear-gradient(135deg, #121212, #1f1f1f);
+    padding: 16px;
+    color: #fff;
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding-bottom: 90px;
+    /* Чтобы история игр не заходила за навбар */
+}
+
+h2 {
+    font-size: 24px;
+    color: #ffffff;
+    text-align: center;
+}
+
+.game-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.game-history-item {
+    display: flex;
+    flex-direction: column;
+    background: #1f1f1f;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-left: 8px solid;
+    /* Динамический цвет */
+    transition: transform 0.3s, background 0.3s;
+}
+
+.game-history-item.win {
+    border-left-color: #4caf50;
+    /* Зеленый для побед */
+}
+
+.game-history-item.loss {
+    border-left-color: #f44336;
+    /* Красный для поражений */
+}
+
+.game-history-item:hover {
+    background: #292929;
+    transform: scale(1.02);
+}
+
+.game-history-item .details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.opponent {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.result {
+    font-size: 14px;
+    font-weight: bold;
+    color: #bbbbbb;
+}
+
+.date {
+    font-size: 12px;
+    color: #aaaaaa;
+    margin-top: 8px;
+    text-align: right;
+}
+
+/* Прокрутка */
+.game-history-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.game-history-container::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.game-history-container::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}

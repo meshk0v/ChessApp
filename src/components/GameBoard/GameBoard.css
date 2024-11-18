@@ -60,12 +60,12 @@
     width: 100%;
 }
 
-.avatar-container {
+.avatar-container1 {
     display: flex;
     align-items: center;
 }
 
-.avatar-container img {
+.avatar-container1 img {
     width: 50px;
     height: 50px;
     border-radius: 50%;

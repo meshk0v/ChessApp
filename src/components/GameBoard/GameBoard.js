@@ -264,7 +264,7 @@ const renderPiece = (piece) => {
 return (
     <div className="game-board-container">
         <div className="top-info-container">
-            <div className="avatar-container">
+            <div className="avatar-container1">
                 {opponentAvatar ? (
                     <img src={opponentAvatar} alt="Opponent Avatar" />
                 ) : (
@@ -307,7 +307,7 @@ return (
         </div>
 
         <div className="bottom-info-container">
-            <div className="avatar-container">
+            <div className="avatar-container1">
                 {userAvatar ? (
                     <img src={userAvatar} alt="User Avatar" />
                 ) : (

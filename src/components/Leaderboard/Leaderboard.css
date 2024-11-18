@@ -1,12 +1,159 @@
-/* src/components/Leaderboard.css */
-
+/* Общий контейнер */
 .leaderboard-container {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
     height: 100vh;
-    /* Высота 100% экрана */
-    background-color: #1c1f21;
-        /* background: linear-gradient(135deg, #0a0b0d, #1c1f21); */
-    /* Градиент фона */
+    background: linear-gradient(135deg, #121212, #1f1f1f);
+    padding: 16px;
+    color: #fff;
+    overflow: hidden;
+}
+
+/* Заголовок текущего пользователя */
+.user-header {
+    background: #282828;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.user-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.user-row .avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #555;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    color: white;
+}
+
+.user-row .info {
+    display: flex;
+    flex-direction: column;
+    margin-left: 10px;
+    flex-grow: 1;
+}
+
+.user-row .info .username {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.user-row .info .rating {
+    font-size: 14px;
+    color: #bbbbbb;
+}
+
+.user-row .rank {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* Заголовок таблицы */
+.leaderboard-title {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    border-bottom: 2px solid #333;
+    padding-bottom: 4px;
+}
+
+/* Список игроков */
+.leaderboard-list {
+    flex: 1;
+    overflow-y: auto;
+    /* Только вертикальная прокрутка */
+    overflow-x: hidden;
+    /* Отключаем горизонтальную прокрутку */
+    padding-bottom: 100px;
+    /* Отступ для нижнего бара */
+    margin-right: -16px;
+    /* Убираем горизонтальную прокрутку */
+    width: 100%;
+    /* Устанавливаем фиксированную ширину */
+    box-sizing: border-box;
+    /* Учитываем padding и border */
+}
+
+.player-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: #1f1f1f;
+    border-radius: 8px;
+    border: 1px solid #333;
+    transition: transform 0.3s, background 0.3s;
+    width: 100%;
+    /* Фиксированная ширина для выравнивания */
+    box-sizing: border-box;
+    /* Учитываем padding и border */
+}
+
+
+.player-row.top-three {
+    border: 2px solid #0088cc;
+    box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);}
+
+
+.player-info {
+    display: flex;
+    align-items: center;
+}
+
+.player-info .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #444;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    color: white;
+    margin-right: 10px;
+}
+
+.player-info .info .username {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.player-info .info .rating {
+    font-size: 12px;
+    color: #bbbbbb;
+}
+
+.rank {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Прокручиваемость */
+.leaderboard-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.leaderboard-list::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.leaderboard-list::-webkit-scrollbar-thumb:hover {
+    background: #777;
 }

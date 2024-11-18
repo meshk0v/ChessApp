@@ -18,6 +18,19 @@ const Lobby = ({ setBottomNavVisible }) => {
   const [isWaitingForOpponent, setIsWaitingForOpponent] = useState(false);
   const navigate = useNavigate();
   const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  
+// useEffect(() => {
+//     if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.requestFullscreen === "function") {
+//         try {
+//             window.Telegram.WebApp.requestFullscreen();
+//         } catch (err) {
+//             console.error("Ошибка при вызове requestFullscreen:", err);
+//         }
+//     } else {
+//         console.warn("requestFullscreen не поддерживается в текущей версии Telegram WebApp SDK.");
+//     }
+// }, []);
+
 
   // Синхронизируем `gameId` и `playerJoined` с `sessionStorage`
   useEffect(() => {
