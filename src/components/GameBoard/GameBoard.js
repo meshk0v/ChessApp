@@ -19,6 +19,8 @@ const GameBoard = ({ gameId, playerColor, resetGame }) => {
   const [showModal, setShowModal] = useState(false);
   const [timeoutModal, setTimeoutModal] = useState(null); // Уведомление о времени
   const [timeLeft, setTimeLeft] = useState({ white: null, black: null });
+  const [surrenderDisabled, setSurrenderDisabled] = useState(false);
+  const [drawOfferDisabled, setDrawOfferDisabled] = useState(false);
 
 useEffect(() => {
   // Получение времени с сервера
@@ -240,26 +242,103 @@ const renderPiece = (piece) => {
   if (!piece) return null;
   return <img src={pieceImages[piece]} alt={piece} style={{ width: '100%', height: '100%' }} />;
 };
+const [alertMessage, setAlertMessage] = useState(null);
 
 
-  const handleSurrender = () => {
-    socket.emit('surrender', { gameId });
-    alert("Вы сдались!");
+// Функция для показа уведомления
+const showAlert = (message) => {
+  setAlertMessage(message);
+  setTimeout(() => {
+    setAlertMessage(null); // Скрываем уведомление через 3 секунды
+  }, 3000);
+};
+
+// Обработка кнопки "Сдаться"
+const handleSurrender = () => {
+  setSurrenderDisabled(true);
+  toggleModal(); // Закрываем модальное окно
+  const winner = playerColor === 'white' ? 'Opponent (Black)' : 'Opponent (White)';
+  
+  showAlert(`Вы сдались! Победитель: ${winner}`);
+  
+  socket.emit('surrender', { gameId });
+};
+
+useEffect(() => {
+  // Слушаем событие окончания игры
+  socket.on('gameEnded', ({ message }) => {
+    showAlert(message); // Показываем сообщение о результате игры
+    setTimeout(() => {
+      resetGame(); // Сбрасываем игру через 3 секунды
+    }, 3000);
+  });
+
+  return () => socket.off('gameEnded');
+}, [resetGame]);
+
+
+  // Обработка кнопки "Предложить ничью"
+  const handleOfferDraw = () => {
+    toggleModal(); // Закрываем модальное окно
+    setDrawOfferDisabled(true);
+    showAlert('Ничья предложена'); // Показ уведомления
+
+    socket.emit('offerDraw', { gameId }, (response) => {
+      if (response.status !== 'success') {
+        showAlert('Ошибка: Невозможно предложить ничью.');
+        setDrawOfferDisabled(false);
+      }
+    });
   };
 
-  const offerDraw = () => {
-    socket.emit('offerDraw', { gameId });
-    alert("Вы предложили ничью.");
+const [drawOfferModal, setDrawOfferModal] = useState(null); // Хранит сообщение о предложении ничьей
+
+const handleAcceptDraw = () => {
+  setDrawOfferModal(null); // Закрываем модальное окно
+  socket.emit('acceptDraw', { gameId });
+  showAlert('Ничья принята! Игра завершена.');
+  setTimeout(() => resetGame(), 3000);
+};
+
+const handleRejectDraw = () => {
+  setDrawOfferModal(null); // Закрываем модальное окно
+  socket.emit('rejectDraw', { gameId });
+  showAlert('Вы отклонили ничью.');
+};
+
+
+useEffect(() => {
+  // Слушаем предложение ничьей
+  socket.on('drawOffered', ({ message }) => {
+    setDrawOfferModal({ message }); // Открываем кастомное окно
+  });
+
+  // Слушаем событие отклонения ничьей
+  socket.on('drawRejected', ({ message }) => {
+    showAlert(message);
+    setDrawOfferDisabled(false); // Снова разрешаем предлагать ничью
+  });
+
+  return () => {
+    socket.off('drawOffered');
+    socket.off('drawRejected');
   };
+}, [gameId]);
+
+
+
+
+
+
+
+
+
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
   };
 
-    const handleCloseModal = () => {
-    setShowModal(false);
-  };
 
 return (
     <div className="game-board-container">
@@ -327,17 +406,33 @@ return (
         &#x2022;&#x2022;&#x2022;
       </button>
 
-      {/* Модальное окно с выбором действий */}
       {showModal && (
         <Modal
           showModal={showModal}
           toggleModal={toggleModal}
           onSurrender={handleSurrender}
-          onOfferDraw={offerDraw}
+          onOfferDraw={handleOfferDraw}
+          surrenderDisabled={surrenderDisabled}
+          drawOfferDisabled={drawOfferDisabled}
         />
       )}
+      {alertMessage && (
+        <div className="alert-notification">
+          {alertMessage}
+        </div>
+      )}
+{drawOfferModal && (
+  <div className="custom-modal-overlay">
+    <div className="custom-modal">
+      <p>{drawOfferModal.message}</p>
+      <div className="custom-modal-actions">
+        <button onClick={handleAcceptDraw}>Принять</button>
+        <button onClick={handleRejectDraw}>Отклонить</button>
+      </div>
+    </div>
+  </div>
+)}
 
-      {/* Уведомление об истечении времени */}
       {timeoutModal && (
         <div className="timeout-modal">
           <div className="modal-overlay" onClick={handleCloseTimeoutModal}></div>
