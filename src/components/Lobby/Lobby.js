@@ -18,28 +18,13 @@ const Lobby = ({ setBottomNavVisible }) => {
   const [isWaitingForOpponent, setIsWaitingForOpponent] = useState(false);
   const navigate = useNavigate();
   const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-  
-// useEffect(() => {
-//     if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.requestFullscreen === "function") {
-//         try {
-//             window.Telegram.WebApp.requestFullscreen();
-//         } catch (err) {
-//             console.error("Ошибка при вызове requestFullscreen:", err);
-//         }
-//     } else {
-//         console.warn("requestFullscreen не поддерживается в текущей версии Telegram WebApp SDK.");
-//     }
-// }, []);
 
-
-  // Синхронизируем `gameId` и `playerJoined` с `sessionStorage`
-  useEffect(() => {
+ useEffect(() => {
     const storedGameId = sessionStorage.getItem('gameId');
     const storedPlayerJoined = sessionStorage.getItem('playerJoined') === 'true';
     if (storedGameId) setGameId(storedGameId);
     if (storedPlayerJoined) setPlayerJoined(storedPlayerJoined);
   }, []);
-
   
   const handleLeaveGame = () => {
     sessionStorage.removeItem('gameId');
@@ -82,16 +67,6 @@ const Lobby = ({ setBottomNavVisible }) => {
       setIsWaitingForOpponent(false);
     });
 
-    socket.on('opponentDisconnected', (data) => {
-      alert(data.message);
-      handleLeaveGame();
-    });
-
-    socket.on('gameEnded', (data) => {
-      alert(data.message);
-      handleLeaveGame();
-    });
-
     socket.on('errorMessage', (data) => {
       alert(data.message);
       setIsWaitingForOpponent(false);
@@ -103,8 +78,6 @@ const Lobby = ({ setBottomNavVisible }) => {
       socket.off('assignColor');
       socket.off('playerJoined');
       socket.off('gameStart');
-      socket.off('opponentDisconnected');
-      socket.off('gameEnded');
       socket.off('errorMessage');
     };
   }, [navigate]); 

@@ -1,7 +1,7 @@
-import React from 'react';
-import './GameBoard.css'; // Убедитесь, что стили подключены
+import React, { useEffect, useState } from 'react';
+import './PlayerInfo.css';
 
-import pieceImages from './pieceImages';
+import pieceImages from '../pieceImages';
 
 const groupCapturedPieces = (pieces) => {
   const grouped = {};
@@ -14,7 +14,15 @@ const groupCapturedPieces = (pieces) => {
   return Object.values(grouped);
 };
 
-const PlayerInfo = ({ avatar, nickname, rank, timeLeft, isOpponent, capturedPieces }) => {
+const PlayerInfo = ({
+  avatar,
+  nickname,
+  rank,
+  timeLeft,
+  isOpponent,
+  capturedPieces,
+  disconnectCountdown,
+}) => {
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -33,7 +41,6 @@ const PlayerInfo = ({ avatar, nickname, rank, timeLeft, isOpponent, capturedPiec
           <div className="user-nickname">{nickname}</div>
           <div className="user-rank">
             Rank: {rank}
-            {/* Отображаем захваченные фигуры */}
             <div className="captured-pieces">
               {groupedPieces.map((group, index) => (
                 <div className="captured-piece-group" key={index}>
@@ -49,9 +56,24 @@ const PlayerInfo = ({ avatar, nickname, rank, timeLeft, isOpponent, capturedPiec
             </div>
           </div>
         </div>
+        {isOpponent && disconnectCountdown !== null && (
+          <div className="disconnect-timer">
+            <p>Противник отключен</p>
+            <div className="disconnect-progress-bar">
+              <div
+                className="disconnect-progress"
+                style={{
+                  width: `${(disconnectCountdown / 10) * 100}%`,
+                  transition: 'width 1s linear', // Плавное изменение ширины
+                }}
+              ></div>
+            </div>
+          </div>
+        )}
         <div className="timer-container">{formatTime(timeLeft)}</div>
       </div>
     </div>
   );
 };
+
 export default PlayerInfo;

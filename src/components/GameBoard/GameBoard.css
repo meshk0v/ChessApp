@@ -61,55 +61,6 @@
     width: 100%;
 }
 
-/* .avatar-container1 {
-    display: flex;
-    align-items: center;
-}
-
-.avatar-container1 img {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    margin-right: 10px;
-} */
-
-.user-info-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-}
-
-.user-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    font-size: 14px;
-    margin-right: auto;
-}
-
-.user-nickname {
-    font-weight: bold;
-    color: #ffffff;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.user-rank {
-    font-size: 12px;
-    color: #cccccc;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.timer-container {
-    background-color: #333333;
-    color: white;
-    font-size: 18px;
-    font-weight: bold;
-    border-radius: 5px;
-    padding: 5px 10px;
-    text-align: center;
-}
-
 .action-buttons {
     display: flex;
     justify-content: space-around;
@@ -141,11 +92,115 @@
     color: #ffffff;
     cursor: pointer;
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 30px;
+    right: 20px;
     z-index: 10;
     padding: 8px;
 }
+
+
+/* Стили для уведомления об истечении времени */
+.timeout-modal .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9;
+}
+
+
+/* Стиль для уведомлений */
+.alert-notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+/* Анимация исчезновения */
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+}
+
+
+/* Для клетки, откуда начался ход (50% от прозрачности конечного цвета) */
+.last-move-from {
+    background-color: rgba(255, 223, 0, 0.7);
+    /* Прозрачность 50% от 0.7 */
+}
+
+/* Для клетки, где закончился ход */
+.last-move-to {
+    background-color: rgba(255, 223, 0, 0.7);
+    /* Менее прозрачный желтый */
+}
+
+
+
+.custom-modal h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.custom-modal p {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.custom-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.custom-modal-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    color: #fff;
+}
+
+.custom-modal-actions button:first-child {
+    background-color: #4caf50;
+    /* Зеленая кнопка */
+}
+
+.custom-modal-actions button:first-child:hover {
+    background-color: #45a049;
+}
+
+.custom-modal-actions button:last-child {
+    background-color: #f44336;
+    /* Красная кнопка */
+}
+
+.custom-modal-actions button:last-child:hover {
+    background-color: #e53935;
+}
+
 
 /* Задний фон для замыливания */
 .modal-overlay {
@@ -201,23 +256,6 @@
     background-color: #66bb6a;
 }
 
-
-
-
-
-
-/* Стили для уведомления об истечении времени */
-.timeout-modal .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
-    z-index: 9;
-}
-
 .timeout-modal .modal-content {
     position: fixed;
     top: 50%;
@@ -243,217 +281,4 @@
 
 .timeout-modal .modal-content button:hover {
     background-color: #ff856d;
-}
-
-
-/* Стиль для уведомлений */
-.alert-notification {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #333;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 16px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-}
-
-/* Анимация исчезновения */
-@keyframes fadeOut {
-    0% {
-        opacity: 1;
-    }
-
-    80% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: 0;
-        transform: translateX(-50%) translateY(-20px);
-    }
-}
-
-
-
-.player-info-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 10px 0;
-    width: 100%;
-}
-
-.player-info-container.opponent {
-    margin-top: 15px;
-}
-
-.player-info-container.player {
-    margin-bottom: 15px;
-}
-
-
-.avatar-container1 img {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    margin-right: 10px;
-}
-
-
-.promotion-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
-    /* Задний фон замылен */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.promotion-modal {
-    background: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    text-align: center;
-    z-index: 1010;
-}
-
-.promotion-options {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-}
-
-.promotion-options button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-}
-
-.promotion-options button img {
-    width: 60px;
-    /* Размер фигур */
-    height: 60px;
-}
-
-
-/* Для клетки, откуда начался ход (50% от прозрачности конечного цвета) */
-.last-move-from {
-    background-color: rgba(255, 223, 0, 0.7);
-    /* Прозрачность 50% от 0.7 */
-}
-
-/* Для клетки, где закончился ход */
-.last-move-to {
-    background-color: rgba(255, 223, 0, 0.7);
-    /* Менее прозрачный желтый */
-}
-
-.captured-pieces {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    /* Убираем отступ между группами */
-}
-
-.captured-piece-group {
-    display: flex;
-    align-items: center;
-    position: relative;
-}
-
-.captured-piece-group img {
-    width: 20px;
-    height: 20px;
-    margin-left: -14px;
-    /* Уменьшаем перекрытие */
-}
-
-.captured-piece-group img:first-child {
-    margin-left: 0;
-    /* У первой фигуры в группе отступа слева нет */
-}
-
-.captured-piece-group+.captured-piece-group {
-    margin-left: -3px;
-    /* Отступ между группами */
-}
-
-
-
-
-
-.custom-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.custom-modal {
-    background: #333;
-    color: white;
-    padding: 20px;
-    border-radius: 8px;
-    text-align: center;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-.custom-modal h2 {
-    font-size: 24px;
-    margin-bottom: 10px;
-}
-
-.custom-modal p {
-    font-size: 18px;
-    margin-bottom: 20px;
-}
-
-.custom-modal-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-}
-
-.custom-modal-actions button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    color: #fff;
-}
-
-.custom-modal-actions button:first-child {
-    background-color: #4caf50;
-    /* Зеленая кнопка */
-}
-
-.custom-modal-actions button:first-child:hover {
-    background-color: #45a049;
-}
-
-.custom-modal-actions button:last-child {
-    background-color: #f44336;
-    /* Красная кнопка */
-}
-
-.custom-modal-actions button:last-child:hover {
-    background-color: #e53935;
 }

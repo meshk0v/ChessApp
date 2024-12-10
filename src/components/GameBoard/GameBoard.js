@@ -5,11 +5,12 @@ import socket from '../../socket';
 import axios from 'axios';
 import pieceImages from './pieceImages';
 import initialBoard from './initialBoard';
-import Modal from './Modal';
-import DrawOfferModal from './DrawOfferModal';
-import PlayerInfo from './PlayerInfo';
-import ChessBoard from './ChessBoard';
-import { Chess } from 'chess.js'; // Убедитесь, что библиотека импортирована
+import Modal from './Modal/MenuModal/MenuModal';
+import DrawOfferModal from './Modal/DrawOfferModal/DrawOfferModal';
+import PlayerInfo from './PlayerInfo/PlayerInfo';
+import ChessBoard from './ChessBoard/ChessBoard';
+import { Chess } from 'chess.js';
+import ResultModal from './Modal/ResultModal/ResultModal';
 
 
 const GameBoard = ({ gameId, playerColor, resetGame }) => {
@@ -22,8 +23,6 @@ const GameBoard = ({ gameId, playerColor, resetGame }) => {
   const [showModal, setShowModal] = useState(false);
   const [timeoutModal, setTimeoutModal] = useState(null); // Уведомление о времени
   const [timeLeft, setTimeLeft] = useState({ white: null, black: null });
-  const [surrenderDisabled, setSurrenderDisabled] = useState(false);
-  const [drawOfferDisabled, setDrawOfferDisabled] = useState(false);
   const [drawOfferModal, setDrawOfferModal] = useState(null); // Хранит сообщение о предложении ничьей
   const [alertMessage, setAlertMessage] = useState(null);
   const [lastMove, setLastMove] = useState(null); // Состояние для последнего хода
@@ -31,7 +30,7 @@ const GameBoard = ({ gameId, playerColor, resetGame }) => {
   const [capturedByOpponent, setCapturedByOpponent] = useState([]); // Фигуры, захваченные оппонентом
   const [resultModal, setResultModal] = useState(null); // Хранит информацию о результате игры
 
- useEffect(() => {
+  useEffect(() => {
   socket.on('syncTime', ({ timeLeft }) => {
     if (resultModal) {
       console.log("[CLIENT] Ignoring syncTime: Game is over.");
@@ -79,8 +78,6 @@ useEffect(() => {
 
   return () => clearInterval(smoothTimer);
 }, [isMyTurn, playerColor, resultModal]);
-
-
 
   const handleCloseTimeoutModal = () => {
       setTimeoutModal(null);
@@ -156,7 +153,7 @@ useEffect(() => {
     }
     if (gameOver) {
       console.log('[CLIENT] Game over message:', message);
-      setResultModal({ message, winner: currentTurn === 'white' ? 'Белые' : 'Черные' });
+      setResultModal({ message});
     }
   });
 
@@ -181,35 +178,29 @@ useEffect(() => {
 
   // Обработка кнопки "Сдаться"
   const handleSurrender = () => {
-    setSurrenderDisabled(true);
     toggleModal(); // Закрываем модальное окно
     const winner = playerColor === 'white' ? 'Opponent (Black)' : 'Opponent (White)';
-    
-    showAlert(`Вы сдались! Победитель: ${winner}`);
-    
     socket.emit('surrender', { gameId });
   };
 
-  useEffect(() => {
-    // Слушаем событие окончания игры
-    socket.on('gameEnded', ({ message }) => {
-    setResultModal({ message, winner: isMyTurn ? 'Вы' : 'Оппонент' });
+useEffect(() => {
+  // Слушаем событие окончания игры
+  socket.on('gameEnded', ({ message }) => {
+    setResultModal({ message }); // Используем данные с сервера
     setTimeLeft({ white: null, black: null }); // Сбрасываем таймер
-    });
+  });
 
-    return () => socket.off('gameEnded');
-  }, [resetGame]);
+  return () => socket.off('gameEnded');
+}, [resetGame]);
 
   // Обработка кнопки "Предложить ничью"
   const handleOfferDraw = () => {
     toggleModal(); // Закрываем модальное окно
-    setDrawOfferDisabled(true);
     showAlert('Ничья предложена'); // Показ уведомления
 
     socket.emit('offerDraw', { gameId }, (response) => {
       if (response.status !== 'success') {
         showAlert('Ошибка: Невозможно предложить ничью.');
-        setDrawOfferDisabled(false);
       }
       });
     };
@@ -217,8 +208,6 @@ useEffect(() => {
   const handleAcceptDraw = () => {
     setDrawOfferModal(null); // Закрываем модальное окно
     socket.emit('acceptDraw', { gameId });
-    showAlert('Ничья принята! Игра завершена.');
-    setTimeout(() => resetGame(), 3000);
   };
 
   const handleRejectDraw = () => {
@@ -237,7 +226,6 @@ useEffect(() => {
     // Слушаем событие отклонения ничьей
     socket.on('drawRejected', ({ message }) => {
       showAlert(message);
-      setDrawOfferDisabled(false); // Снова разрешаем предлагать ничью
     });
 
     return () => {
@@ -256,6 +244,39 @@ const handleExitToMenu = () => {
   setResultModal(null); // Закрываем модальное окно
 };
 
+  const [opponentDisconnectTimer, setOpponentDisconnectTimer] = useState(null);
+
+
+useEffect(() => {
+  let interval;
+
+  const startCountdown = (timeout) => {
+    let countdown = timeout;
+    setOpponentDisconnectTimer(countdown);
+
+    interval = setInterval(() => {
+      countdown -= 1;
+      if (countdown <= 0) {
+        clearInterval(interval);
+        setOpponentDisconnectTimer(null); // Таймер завершился
+      } else {
+        setOpponentDisconnectTimer(countdown); // Уменьшаем значение
+      }
+    }, 1000);
+  };
+
+  socket.on('opponentDisconnected', ({ timeout }) => {
+    clearInterval(interval); // Удаляем старый таймер, если он был
+    startCountdown(timeout);
+  });
+
+  return () => {
+    socket.off('opponentDisconnected');
+    clearInterval(interval);
+  };
+}, []);
+
+
   return (
       <div className="game-board-container">
         <PlayerInfo
@@ -265,6 +286,7 @@ const handleExitToMenu = () => {
           timeLeft={timeLeft?.[playerColor === 'white' ? 'black' : 'white'] || 0}
           capturedPieces={capturedByOpponent} // Оппонент захватил фигуры
           isOpponent={true}
+          disconnectCountdown={opponentDisconnectTimer} // Передаем таймер отключения
         />
           <ChessBoard
             board={board}
@@ -275,8 +297,6 @@ const handleExitToMenu = () => {
             chess={chess} // Передаём экземпляр chess
             lastMove={lastMove} // Передаём состояние последнего хода
           />
-
-
           <PlayerInfo
             avatar={userAvatar}
             nickname="You"
@@ -289,27 +309,20 @@ const handleExitToMenu = () => {
         <button className="three-dots-button" onClick={toggleModal}>
           &#x2022;&#x2022;&#x2022;
         </button>
-{resultModal && (
-  <div className="custom-modal-overlay">
-    <div className="custom-modal">
-      <h2>{resultModal.message}</h2>
-      <p>Победитель: {resultModal.winner}</p>
-      <div className="custom-modal-actions">
-        <button onClick={handleRematchRequest}>Реванш</button>
-        <button onClick={handleExitToMenu}>В главное меню</button>
-      </div>
-    </div>
-  </div>
-)}
-
+        
+        {resultModal && (
+          <ResultModal
+            message={resultModal.message}
+            onRematch={handleRematchRequest}
+            onExit={handleExitToMenu}
+          />
+        )}
         {showModal && (
           <Modal
             showModal={showModal}
             toggleModal={toggleModal}
             onSurrender={handleSurrender}
             onOfferDraw={handleOfferDraw}
-            surrenderDisabled={surrenderDisabled}
-            drawOfferDisabled={drawOfferDisabled}
           />
         )}
         {alertMessage && (

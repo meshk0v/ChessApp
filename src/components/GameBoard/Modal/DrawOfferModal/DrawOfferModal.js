@@ -1,5 +1,5 @@
 import React from 'react';
-import './GameBoard.css'; // Создайте файл стилей, если необходимо
+import './DrawOfferModal.css'; // Создайте файл стилей, если необходимо
 
 const DrawOfferModal = ({ message, onAccept, onReject }) => {
   if (!message) return null;
