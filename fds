@@ -1,0 +1,138 @@
+import './Pieces.css'
+import { useRef, useState } from 'react'
+import { copyPosition, createPosition } from '../helper'
+import { useAppContext } from '../context/Context'
+import { makeNewMove } from '../reducer/actions/move'
+
+const Pieces = () => {
+    const ref = useRef()
+
+    const {appState, dispatch} = useAppContext()
+
+    const currentPosition = appState.position[appState.position.length -1]
+
+    const [draggingPiece, setDraggingPiece] = useState(null)
+    const [draggingCoords, setDraggingCoords] = useState(null)
+    const [offset, setOffset] = useState({ x: 0, y: 0 })
+
+    const calculateCoords = (clientX, clientY) => {
+        const boardRect = ref.current.getBoundingClientRect();
+        const tileSize = boardRect.width / 8;
+
+        // Рассчитываем индекс клетки
+        const y = Math.floor((clientX - boardRect.left) / tileSize); // Столбец (горизонталь)
+        const x = Math.floor((clientY - boardRect.top) / tileSize); // Строка (вертикаль)
+
+        return { x: 7 - x, y }; // Инверсия `x` для корректного позиционирования
+    };
+
+
+    const startDragging = (clientX, clientY, piece, rank, file) => {
+        const boardRect = ref.current.getBoundingClientRect()
+
+        setDraggingPiece({ piece, rank, file })
+        setOffset({
+            x: clientX - boardRect.left,
+            y: clientY - boardRect.top,
+        })
+
+        setDraggingCoords({
+            left: clientX - boardRect.left,
+            top: clientY - boardRect.top,
+        })
+    }
+
+    const moveDragging = (clientX, clientY) => {
+        if (draggingPiece) {
+            const boardRect = ref.current.getBoundingClientRect()
+            const left = clientX - boardRect.left - offset.x
+            const top = clientY - boardRect.top - offset.y
+
+            setDraggingCoords({ left, top })
+        }
+    }
+
+    const endDragging = (clientX, clientY) => {
+        if (!draggingPiece) return
+
+        const { x, y } = calculateCoords(clientX, clientY)
+        const newPosition = copyPosition(currentPosition)
+        const { piece, rank, file } = draggingPiece
+
+        newPosition[rank][file] = ''
+        newPosition[x][y] = piece
+
+        // setState(newPosition)
+        dispatch(makeNewMove({newPosition}))
+        setDraggingPiece(null)
+        setDraggingCoords(null)
+    }
+
+    const onMouseDown = (e, piece, rank, file) => {
+        startDragging(e.clientX, e.clientY, piece, rank, file)
+    }
+
+    const onMouseMove = (e) => {
+        moveDragging(e.clientX, e.clientY)
+    }
+
+    const onMouseUp = (e) => {
+        endDragging(e.clientX, e.clientY)
+    }
+
+    const onTouchStart = (e, piece, rank, file) => {
+        const touch = e.touches[0]
+        startDragging(touch.clientX, touch.clientY, piece, rank, file)
+    }
+
+    const onTouchMove = (e) => {
+        const touch = e.touches[0]
+        moveDragging(touch.clientX, touch.clientY)
+    }
+
+    const onTouchEnd = (e) => {
+        const touch = e.changedTouches[0]
+        endDragging(touch.clientX, touch.clientY)
+    }
+
+    return (
+        <div
+            className='pieces'
+            ref={ref}
+            onMouseMove={onMouseMove}
+            onMouseUp={onMouseUp}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+        >
+            {currentPosition.map((r, rank) =>
+                r.map((f, file) =>
+                    currentPosition[rank][file] ? (
+                        <div
+                            key={`${rank}-${file}`}
+                            className={`piece ${currentPosition[rank][file]} p-${file}${rank}`}
+                            style={
+                                draggingPiece &&
+                                draggingPiece.rank === rank &&
+                                draggingPiece.file === file
+                                    ? {
+                                          position: 'absolute',
+                                          left: `${draggingCoords.left}px`,
+                                          top: `${draggingCoords.top}px`,
+                                      }
+                                    : {}
+                            }
+                            onMouseDown={(e) =>
+                                onMouseDown(e, currentPosition[rank][file], rank, file)
+                            }
+                            onTouchStart={(e) =>
+                                onTouchStart(e, currentPosition[rank][file], rank, file)
+                            }
+                        />
+                    ) : null
+                )
+            )}
+        </div>
+    )
+}
+
+export default Pieces

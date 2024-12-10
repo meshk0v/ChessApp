@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-// import Lobby from './components/Lobby/Lobby';
-import Lobby from './components/Board/Board';
+import Lobby from './components/Lobby/Lobby';
+// import Lobby from './components/Board/Board';
 import Leaderboard from './components/Leaderboard/Leaderboard';
 import Profile from './components/Profile/Profile';
 import BottomNav from './components/BottomNav/BottomNav';

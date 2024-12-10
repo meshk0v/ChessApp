@@ -3,18 +3,18 @@ import './GameBoard.css';
 import socket from '../../socket';
 
 import axios from 'axios';
-import { getPossibleMoves } from './chessUtils';
 import pieceImages from './pieceImages';
 import initialBoard from './initialBoard';
 import Modal from './Modal';
 import DrawOfferModal from './DrawOfferModal';
 import PlayerInfo from './PlayerInfo';
 import ChessBoard from './ChessBoard';
+import { Chess } from 'chess.js'; // Убедитесь, что библиотека импортирована
+
 
 const GameBoard = ({ gameId, playerColor, resetGame }) => {
+  const [chess, setChess] = useState(new Chess());
   const [board, setBoard] = useState(initialBoard);
-  const [selectedPiece, setSelectedPiece] = useState(null);
-  const [highlightedSquares, setHighlightedSquares] = useState([]);
   const [isMyTurn, setIsMyTurn] = useState(playerColor === 'white'); // Белые ходят первыми
   const [userAvatar, setUserAvatar] = useState(null);
   const [opponentAvatar, setOpponentAvatar] = useState(null);
@@ -26,53 +26,61 @@ const GameBoard = ({ gameId, playerColor, resetGame }) => {
   const [drawOfferDisabled, setDrawOfferDisabled] = useState(false);
   const [drawOfferModal, setDrawOfferModal] = useState(null); // Хранит сообщение о предложении ничьей
   const [alertMessage, setAlertMessage] = useState(null);
+  const [lastMove, setLastMove] = useState(null); // Состояние для последнего хода
+  const [capturedByPlayer, setCapturedByPlayer] = useState([]); // Фигуры, захваченные игроком
+  const [capturedByOpponent, setCapturedByOpponent] = useState([]); // Фигуры, захваченные оппонентом
+  const [resultModal, setResultModal] = useState(null); // Хранит информацию о результате игры
 
-  useEffect(() => {
-    // Получение времени с сервера
-    socket.on('syncTime', ({ timeLeft }) => {
-      console.log('[CLIENT] Sync Time Received:', timeLeft);
+ useEffect(() => {
+  socket.on('syncTime', ({ timeLeft }) => {
+    if (resultModal) {
+      console.log("[CLIENT] Ignoring syncTime: Game is over.");
+      return;
+    }
+    console.log('[CLIENT] Sync Time Received:', timeLeft);
 
-      setTimeLeft((prevTimeLeft) => {
-        if (!prevTimeLeft) return timeLeft;
+    setTimeLeft((prevTimeLeft) => {
+      if (!prevTimeLeft) return timeLeft;
 
-        // Проверка на отклонение времени
-        const whiteDiff = Math.abs(timeLeft.white - prevTimeLeft.white);
-        const blackDiff = Math.abs(timeLeft.black - prevTimeLeft.black);
+      // Проверяем отклонения времени
+      const whiteDiff = Math.abs(timeLeft.white - prevTimeLeft.white);
+      const blackDiff = Math.abs(timeLeft.black - prevTimeLeft.black);
 
-        // Если отклонение больше 1 секунды, синхронизируем
-        if (whiteDiff > 1 || blackDiff > 1) {
-          console.log('[CLIENT] Time difference detected, syncing...');
-          return timeLeft;
-        }
+      if (whiteDiff > 1 || blackDiff > 1) {
+        console.log('[CLIENT] Time difference detected, syncing...');
+        return timeLeft;
+      }
 
-        // Если разницы нет, оставляем локальный таймер
-        return prevTimeLeft;
-      });
+      return prevTimeLeft; // Если разницы нет, сохраняем текущее состояние
     });
+  });
 
-    return () => socket.off('syncTime');
-  }, []);
+  return () => socket.off('syncTime');
+}, [resultModal]); // Добавили зависимость от `resultModal`
 
-  useEffect(() => {
-    // Локальный таймер
-    const smoothTimer = setInterval(() => {
-      setTimeLeft((prevTimeLeft) => {
-        if (!prevTimeLeft) return null;
+useEffect(() => {
+  const smoothTimer = setInterval(() => {
+    setTimeLeft((prevTimeLeft) => {
+      if (!prevTimeLeft || resultModal) {
+        console.log("[CLIENT] Timer paused: Game is over.");
+        return prevTimeLeft;
+      }
 
-        const updatedTime = { ...prevTimeLeft };
-        const currentColor = isMyTurn ? playerColor : (playerColor === 'white' ? 'black' : 'white');
+      const updatedTime = { ...prevTimeLeft };
+      const currentColor = isMyTurn ? playerColor : (playerColor === 'white' ? 'black' : 'white');
 
-        // Уменьшаем время для текущего игрока
-        if (updatedTime[currentColor] > 0) {
-          updatedTime[currentColor] -= 1;
-        }
+      if (updatedTime[currentColor] > 0) {
+        updatedTime[currentColor] -= 1;
+      }
 
-        return updatedTime;
-      });
-    }, 1000);
+      return updatedTime;
+    });
+  }, 1000);
 
-    return () => clearInterval(smoothTimer);
-  }, [isMyTurn, playerColor]);
+  return () => clearInterval(smoothTimer);
+}, [isMyTurn, playerColor, resultModal]);
+
+
 
   const handleCloseTimeoutModal = () => {
       setTimeoutModal(null);
@@ -112,117 +120,51 @@ const GameBoard = ({ gameId, playerColor, resetGame }) => {
   }, [userId, gameId]);
 
 
-  const onClickSquare = (row, col) => {
-    if (!isMyTurn) {
-      console.log("Сейчас ход противника. Пожалуйста, дождитесь своего хода.");
-      return;
+const transformBoardData = (boardData) => {
+  return boardData.map((row) =>
+    row.map((cell) => {
+      if (!cell) return null;
+      return `${cell.color}${cell.type.toUpperCase()}`;
+    })
+  );
+};
+
+
+useEffect(() => {
+  socket.on('updateBoard', ({ board: fen, currentTurn, move, capturedPiece, gameOver, message }) => {
+    console.log('[CLIENT] FEN received:', fen);
+    console.log('[CLIENT] Opponent move:', move);
+
+    const newChess = new Chess();
+    newChess.load(fen);
+    setChess(newChess);
+
+    setBoard(transformBoardData(newChess.board())); // Обновляем доску
+    setIsMyTurn(currentTurn === playerColor); // Проверяем, кто сейчас ходит
+
+    if (move) {
+      setLastMove(move); // Обновляем состояние последнего хода
     }
 
-    const piece = board[row][col];
-    console.log(`Clicked square (${row}, ${col}) with piece: ${piece}`);
-    console.log(`Selected piece: ${selectedPiece ? selectedPiece.piece : 'none'}`);
-
-    // Если щелкнули на свою другую фигуру, то выбираем ее
-    if (piece && piece[0] === playerColor[0]) {
-      if (selectedPiece && (selectedPiece.position[0] !== row || selectedPiece.position[1] !== col)) {
-        console.log(`Switching selected piece to: ${piece} at position (${row}, ${col})`);
-        setSelectedPiece({ piece, position: [row, col] });
-        setHighlightedSquares(getPossibleMoves(board, piece, row, col));
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-          window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-        }
-        return;
-      }
-    }
-
-    // Если фигура уже выбрана, проверяем допустимость хода на клетку
-    if (selectedPiece) {
-      const isValidMove = highlightedSquares.some(([r, c]) => r === row && c === col);
-      console.log(`Valid move check: ${isValidMove} for square (${row}, ${col})`);
-
-      if (isValidMove) {
-        const newBoard = board.map(row => row.slice());
-        const targetPiece = newBoard[row][col];
-        
-        console.log(`Target piece at (${row}, ${col}): ${targetPiece}`);
-        
-        // Проверяем, является ли целевая фигура противником для захвата
-        if (targetPiece && targetPiece[0] !== playerColor[0]) {
-          console.log(`Capturing piece at (${row}, ${col})`);
-        }
-        
-        newBoard[row][col] = selectedPiece.piece;
-        newBoard[selectedPiece.position[0]][selectedPiece.position[1]] = null;
-
-        setBoard(newBoard);
-        setSelectedPiece(null);
-        setHighlightedSquares([]);
-
-        // Отправка хода на сервер через сокет
-        socket.emit('makeMove', {
-          gameId,
-          fromRow: selectedPiece.position[0],
-          fromCol: selectedPiece.position[1],
-          toRow: row,
-          toCol: col
-        });
-
-        setIsMyTurn(false);
-
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-          window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-        }
-        return;
+    // Добавляем захваченную фигуру в соответствующий массив
+    if (capturedPiece) {
+      if (currentTurn === playerColor) {
+        setCapturedByPlayer((prev) => [...prev, capturedPiece]); // Игрок захватил
       } else {
-        console.log("Неправильный ход!");
-        return;
+        setCapturedByOpponent((prev) => [...prev, capturedPiece]); // Оппонент захватил
       }
     }
-
-    // Если фигура еще не выбрана, проверяем, что щелкнули на свою фигуру
-    if (piece && piece[0] === playerColor[0]) {
-      console.log(`Selecting piece: ${piece} at position (${row}, ${col})`);
-      setSelectedPiece({ piece, position: [row, col] });
-      setHighlightedSquares(getPossibleMoves(board, piece, row, col));
-      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-      }
-    } else {
-      console.log("Это не ваша фигура!");
+    if (gameOver) {
+      console.log('[CLIENT] Game over message:', message);
+      setResultModal({ message, winner: currentTurn === 'white' ? 'Белые' : 'Черные' });
     }
+  });
+
+  return () => {
+    socket.off('updateBoard');
   };
+}, [socket, playerColor]);
 
-  const transformBoardData = (boardData) => {
-      return boardData.map(row =>
-        row.map(cell => {
-          if (!cell) return null; // пустая клетка
-          return `${cell.color}${cell.type.toUpperCase()}`; // преобразуем в формат "wP", "bR" и т.д.
-        })
-      );
-    };
-
-  useEffect(() => {
-    socket.on('updateBoard', ({ gameId: receivedGameId, board, currentTurn }) => {
-      if (receivedGameId === gameId) {
-        console.log('Получена обновленная доска:', board);
-        console.log('Текущий ход:', currentTurn);
-
-        const transformedBoard = transformBoardData(board);
-        setBoard(transformedBoard);
-
-        // Обновляем флаг isMyTurn, чтобы определить, можно ли делать ход
-        setIsMyTurn(currentTurn === playerColor);
-      }
-    });
-
-    return () => {
-      socket.off('updateBoard');
-    };
-  }, [socket, gameId, playerColor]);
-
-  const handleSquareClick = (row, col) => {
-    onClickSquare(row, col);
-  };
 
   const renderPiece = (piece) => {
     if (!piece) return null;
@@ -251,10 +193,8 @@ const GameBoard = ({ gameId, playerColor, resetGame }) => {
   useEffect(() => {
     // Слушаем событие окончания игры
     socket.on('gameEnded', ({ message }) => {
-      showAlert(message); // Показываем сообщение о результате игры
-      setTimeout(() => {
-        resetGame(); // Сбрасываем игру через 3 секунды
-      }, 3000);
+    setResultModal({ message, winner: isMyTurn ? 'Вы' : 'Оппонент' });
+    setTimeLeft({ white: null, black: null }); // Сбрасываем таймер
     });
 
     return () => socket.off('gameEnded');
@@ -306,6 +246,16 @@ const GameBoard = ({ gameId, playerColor, resetGame }) => {
       };
     }, [gameId]);
 
+  const handleRematchRequest = () => {
+  socket.emit('requestRematch', { gameId, playerColor });
+  setResultModal(null); // Закрываем модальное окно
+};
+
+const handleExitToMenu = () => {
+  resetGame(); // Вызываем сброс игры
+  setResultModal(null); // Закрываем модальное окно
+};
+
   return (
       <div className="game-board-container">
         <PlayerInfo
@@ -313,28 +263,44 @@ const GameBoard = ({ gameId, playerColor, resetGame }) => {
           nickname="Opponent"
           rank={432}
           timeLeft={timeLeft?.[playerColor === 'white' ? 'black' : 'white'] || 0}
+          capturedPieces={capturedByOpponent} // Оппонент захватил фигуры
           isOpponent={true}
         />
           <ChessBoard
             board={board}
             playerColor={playerColor}
-            highlightedSquares={highlightedSquares}
-            selectedPiece={selectedPiece}
-            onSquareClick={handleSquareClick}
             renderPiece={renderPiece}
+            socket={socket}
+            gameId={gameId}
+            chess={chess} // Передаём экземпляр chess
+            lastMove={lastMove} // Передаём состояние последнего хода
           />
+
+
           <PlayerInfo
             avatar={userAvatar}
             nickname="You"
             rank={432}
             timeLeft={timeLeft?.[playerColor] || 0}
+            capturedPieces={capturedByPlayer} // Игрок захватил фигуры
             isOpponent={false}
           />
-
         {/* Кнопка с тремя точками */}
         <button className="three-dots-button" onClick={toggleModal}>
           &#x2022;&#x2022;&#x2022;
         </button>
+{resultModal && (
+  <div className="custom-modal-overlay">
+    <div className="custom-modal">
+      <h2>{resultModal.message}</h2>
+      <p>Победитель: {resultModal.winner}</p>
+      <div className="custom-modal-actions">
+        <button onClick={handleRematchRequest}>Реванш</button>
+        <button onClick={handleExitToMenu}>В главное меню</button>
+      </div>
+    </div>
+  </div>
+)}
 
         {showModal && (
           <Modal
