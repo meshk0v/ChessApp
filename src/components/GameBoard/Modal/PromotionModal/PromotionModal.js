@@ -5,7 +5,7 @@ const PromotionModal = ({ playerColor, onPromotion, renderPiece }) => {
   return (
       <div className="promotion-modal-overlay">
         <div className="promotion-modal">
-          <p>Выберите фигуру:</p>
+          <p>Select a piece:</p>
           <div className="promotion-options">
             {['q', 'r', 'b', 'n'].map((piece) => (
               <button key={piece} onClick={() => onPromotion(piece)}>

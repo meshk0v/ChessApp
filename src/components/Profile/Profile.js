@@ -1,23 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Profile.css';
 import GameHistory from './GameHistory';
-import { TonConnectButton, TonConnectUIProvider, useTonConnectUI } from '@tonconnect/ui-react';
+import { TonConnectButton, TonConnectUIProvider } from '@tonconnect/ui-react';
+import axios from 'axios';
 
 const Profile = () => {
-  const user = {
-    username: 'meshkov_rm',
-    rating: 280775,
-    gamesPlayed: 154,
-    gamesWon: 96,
-    winRate: 62.3,
-    bestWinStreak: 10,
-    maxRating: 290000,
-    avgGameTime: '12:34',
-    registrationDate: '01.01.2023',
-    friendsCount: 15,
-  };
-
+  const [userData, setUserData] = useState(null); // Данные пользователя
   const [showHistory, setShowHistory] = useState(false);
+  const [isEditing, setIsEditing] = useState(false); // Режим редактирования
+  const [newUsername, setNewUsername] = useState(''); // Новое имя пользователя
+  const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  console.log(userData);
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Получаем данные пользователя
+        const response = await axios.get(`/api/users/${userId}`);
+        setUserData(response.data);
+        setNewUsername(response.data.username || ''); // Заполняем поле для редактирования
+      } catch (error) {
+        console.error('Ошибка при загрузке данных пользователя:', error);
+      }
+    };
+
+    if (userId) {
+      fetchUserData();
+    }
+  }, [userId]);
 
   const openGameHistory = () => {
     setShowHistory(true);
@@ -27,72 +36,126 @@ const Profile = () => {
     setShowHistory(false);
   };
 
+  const handleEditClick = () => {
+    setIsEditing(true); // Включаем режим редактирования
+  };
+
+const handleSaveClick = async () => {
+  try {
+    // Проверка на пустое имя
+    if (!newUsername.trim()) {
+      alert('Имя не может быть пустым.');
+      return;
+    }
+
+    // Отправляем данные на сервер
+    const response = await axios.put(`/api/users/${userId}`, { username: newUsername.trim() });
+
+    if (response.status === 200) {
+      setUserData((prev) => ({ ...prev, username: newUsername.trim() })); // Обновляем локальные данные
+      setIsEditing(false); // Выключаем режим редактирования
+      alert('Имя успешно обновлено.');
+    }
+  } catch (error) {
+    console.error('Ошибка при обновлении имени пользователя:', error);
+
+    // Проверяем код ошибки от сервера
+    if (error.response && error.response.status === 400) {
+      // Если сервер вернул ошибку 400 (имя занято)
+      alert('Данное имя уже занято. Попробуйте другое.');
+    } else {
+      // Для других ошибок
+      alert('Не удалось сохранить имя. Попробуйте снова.');
+    }
+  }
+};
+
+
   if (showHistory) {
     return <GameHistory onBack={closeGameHistory} />;
   }
 
+
   return (
     <TonConnectUIProvider manifestUrl="https://chess-battle.space/tonconnect-manifest.json">
       <div className="profile-container">
-        {/* Карточка пользователя */}
-        <div className="profile-card">
-          <div className="avatar-container">
-            <div className="avatar-placeholder">{user.username[0]}</div>
+        {/* Показываем спиннер, если данные еще загружаются */}
+        {!userData && (
+          <div className="loading-overlay">
+            <div className="spinner"></div>
           </div>
-          <div className="user-info">
-            <h2 className="username">{user.username}</h2>
-            <div className="rating">{user.rating.toLocaleString()} РЕЙТИНГ</div>
-          </div>
-        </div>
+        )}
+        {userData && (
+          <>
+            <div className="profile-card">
+              <div className="avatar-container">
+                {userData.avatar_url ? (
+                  <img className="avatar" src={userData.avatar_url} alt="Avatar" />
+                ) : (
+                  <div className="avatar-placeholder">
+                    {userData.username ? userData.username[0] : '?'}
+                  </div>
+                )}
+              </div>
 
-        {/* Общая статистика */}
-        <div className="statistics">
-          <div className="stat">
-            <div className="stat-label">Сыграно игр</div>
-            <div className="stat-value">{user.gamesPlayed}</div>
-          </div>
-          <div className="stat">
-            <div className="stat-label">Победы</div>
-            <div className="stat-value">{user.gamesWon}</div>
-          </div>
-          <div className="stat">
-            <div className="stat-label">Процент побед</div>
-            <div className="stat-value">{user.winRate}%</div>
-          </div>
-          <div className="stat">
-            <div className="stat-label">Лучшая серия побед</div>
-            <div className="stat-value">{user.bestWinStreak}</div>
-          </div>
-          <div className="stat">
-            <div className="stat-label">Максимальный рейтинг</div>
-            <div className="stat-value">{user.maxRating.toLocaleString()}</div>
-          </div>
-          <div className="stat">
-            <div className="stat-label">Средняя длина игры</div>
-            <div className="stat-value">{user.avgGameTime}</div>
-          </div>
-          <div className="stat">
-            <div className="stat-label">Дата регистрации</div>
-            <div className="stat-value">{user.registrationDate}</div>
-          </div>
-          <div className="stat">
-            <div className="stat-label">Количество друзей</div>
-            <div className="stat-value">{user.friendsCount}</div>
-          </div>
-        </div>
+              <div className="user-info">
+                {!isEditing ? (
+                  <h2 className="username">
+                    {userData.username || 'Неизвестный пользователь'}
+                    <button className="edit-button" onClick={handleEditClick}>
+                      ✏️
+                    </button>
+                  </h2>
+                ) : (
+                  <div className="edit-username-container">
+                    <input
+                      type="text"
+                      className="edit-username-input"
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                    />
+                    <button className="save-button" onClick={handleSaveClick}>
+                      Save
+                    </button>
+                  </div>
+                )}
+                <div className="rating">
+                  {userData.rating?.toLocaleString() || 1200} rank
+                </div>
+              </div>
+            </div>
 
-        {/* Кнопка перехода к истории */}
+            {/* Общая статистика */}
+            <div className="statistics">
+              <div className="stat">
+                <div className="stat-label">Games played</div>
+                <div className="stat-value">{userData.games_played || 0}</div>
+              </div>
+              <div className="stat">
+                <div className="stat-label">Wins</div>
+                <div className="stat-value">{userData.games_won || 0}</div>
+              </div>
+              <div className="stat">
+                <div className="stat-label">Losses</div>
+                <div className="stat-value">
+                  {(userData.games_played || 0) - (userData.games_won || 0)}
+                </div>
+              </div>
+            </div>
 
-        <button className="history-button" onClick={openGameHistory}>
-          История игр
-        </button>
+            {/* Кнопка истории */}
+            <button className="history-button" onClick={openGameHistory}>
+              Game History
+            </button>
 
-          <div className="wallet-section">
-            <TonConnectButton />
-          </div>
+            {/* Подключение кошелька */}
+            <div className="wallet-section">
+              <TonConnectButton />
+            </div>
+          </>
+        )}
       </div>
     </TonConnectUIProvider>
   );
 };
-
 export default Profile;

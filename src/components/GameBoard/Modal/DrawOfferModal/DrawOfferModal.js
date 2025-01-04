@@ -9,8 +9,8 @@ const DrawOfferModal = ({ message, onAccept, onReject }) => {
       <div className="custom-modal">
         <p>{message}</p>
         <div className="custom-modal-actions">
-          <button onClick={onAccept}>Принять</button>
-          <button onClick={onReject}>Отклонить</button>
+          <button onClick={onAccept}>Accept</button>
+          <button onClick={onReject}>Decline</button>
         </div>
       </div>
     </div>

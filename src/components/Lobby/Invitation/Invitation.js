@@ -9,12 +9,12 @@ const Invitation = ({ gameId, invitationLink, waitingMessage, onCopy, onShare, p
     console.log('text -'+playerJoined)
   return (
     <div className="invitation">
-      <h2>Ожидание соперника...</h2>
+      <h2>Waiting for opponent...</h2>
       {!playerJoined && ( // Проверка, чтобы не показывать кнопки, если игрок присоединился
         <div className="invitation-buttons">
           {isMobile ? (
             <button onClick={onShare} className="styled-button">
-              Поделиться
+              Share
             </button>
           ) : (
             <>
@@ -25,7 +25,7 @@ const Invitation = ({ gameId, invitationLink, waitingMessage, onCopy, onShare, p
                 className="invitation-link-input"
               />
               <button onClick={onCopy} className="styled-button">
-                Скопировать ссылку
+                Copy the link
               </button>
             </>
           )}

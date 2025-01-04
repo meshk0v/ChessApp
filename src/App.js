@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import Lobby from './components/Lobby/Lobby';
-// import Lobby from './components/Board/Board';
 import Leaderboard from './components/Leaderboard/Leaderboard';
 import Profile from './components/Profile/Profile';
 import BottomNav from './components/BottomNav/BottomNav';
@@ -11,6 +10,8 @@ import './App.css';
 function App() {
   const [isSplashVisible, setIsSplashVisible] = useState(false);
   const [isBottomNavVisible, setIsBottomNavVisible] = useState(true);
+  const [resetLobbyState, setResetLobbyState] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -20,24 +21,37 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  return (
-   <div className="App">
-     <Router>
-       {isSplashVisible ? (
-          <SplashScreen />
-      ) : (
-          <>
-            <Routes>
-              <Route path="/" element={<Lobby setBottomNavVisible={setIsBottomNavVisible} />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
-              <Route path="/profile" element={<Profile />} />
-            </Routes>
-            {isBottomNavVisible && <BottomNav />}
-          </>
-        )}
-      </Router>
-      </div>
+  useEffect(() => {
+    if (location.pathname !== '/') {
+      setResetLobbyState(true);
+    } else {
+      setResetLobbyState(false);
+    }
+  }, [location]);
 
+  return (
+    <div className="App">
+      {isSplashVisible ? (
+        <SplashScreen />
+      ) : (
+        <>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <Lobby
+                  setBottomNavVisible={setIsBottomNavVisible}
+                  resetLobbyState={resetLobbyState}
+                />
+              }
+            />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/profile" element={<Profile />} />
+          </Routes>
+          {isBottomNavVisible && <BottomNav />}
+        </>
+      )}
+    </div>
   );
 }
 

@@ -6,13 +6,13 @@ const Modal = ({ showModal, toggleModal, onSurrender, onOfferDraw }) => {
       <div className="modal-overlay" onClick={toggleModal}></div>
       <div className="modal-content">
         <button onClick={onSurrender}>
-          Сдаться
+          Surrender
         </button>
         <button onClick={onOfferDraw} >
-          Предложить ничью
+          Offer Draw
         </button>
         <button className="continue-button" onClick={toggleModal}>
-          Продолжить
+          Continue
         </button>
       </div>
     </>

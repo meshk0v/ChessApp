@@ -28,7 +28,6 @@
 
 .dark-square {
     background-color: #617BB0;
-        /* background-color: #3a506b; */
 }
 
 .selected {
@@ -282,3 +281,5 @@
 .timeout-modal .modal-content button:hover {
     background-color: #ff856d;
 }
+
+

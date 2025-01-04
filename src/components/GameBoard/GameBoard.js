@@ -13,7 +13,7 @@ import { Chess } from 'chess.js';
 import ResultModal from './Modal/ResultModal/ResultModal';
 
 
-const GameBoard = ({ gameId, playerColor, resetGame }) => {
+const GameBoard = ({ gameId, playerColor, resetGame, updateGameDetails }) => {
   const [chess, setChess] = useState(new Chess());
   const [board, setBoard] = useState(initialBoard);
   const [isMyTurn, setIsMyTurn] = useState(playerColor === 'white'); // Белые ходят первыми
@@ -29,6 +29,8 @@ const GameBoard = ({ gameId, playerColor, resetGame }) => {
   const [capturedByPlayer, setCapturedByPlayer] = useState([]); // Фигуры, захваченные игроком
   const [capturedByOpponent, setCapturedByOpponent] = useState([]); // Фигуры, захваченные оппонентом
   const [resultModal, setResultModal] = useState(null); // Хранит информацию о результате игры
+  const [isRematchRequested, setRematch] = useState(null); // Хранит информацию о результате игры
+  const [opponentDisconnectTimer, setOpponentDisconnectTimer] = useState(null);
 
   useEffect(() => {
   socket.on('syncTime', ({ timeLeft }) => {
@@ -117,50 +119,50 @@ useEffect(() => {
   }, [userId, gameId]);
 
 
-const transformBoardData = (boardData) => {
-  return boardData.map((row) =>
-    row.map((cell) => {
-      if (!cell) return null;
-      return `${cell.color}${cell.type.toUpperCase()}`;
-    })
-  );
-};
-
-
-useEffect(() => {
-  socket.on('updateBoard', ({ board: fen, currentTurn, move, capturedPiece, gameOver, message }) => {
-    console.log('[CLIENT] FEN received:', fen);
-    console.log('[CLIENT] Opponent move:', move);
-
-    const newChess = new Chess();
-    newChess.load(fen);
-    setChess(newChess);
-
-    setBoard(transformBoardData(newChess.board())); // Обновляем доску
-    setIsMyTurn(currentTurn === playerColor); // Проверяем, кто сейчас ходит
-
-    if (move) {
-      setLastMove(move); // Обновляем состояние последнего хода
-    }
-
-    // Добавляем захваченную фигуру в соответствующий массив
-    if (capturedPiece) {
-      if (currentTurn === playerColor) {
-        setCapturedByPlayer((prev) => [...prev, capturedPiece]); // Игрок захватил
-      } else {
-        setCapturedByOpponent((prev) => [...prev, capturedPiece]); // Оппонент захватил
-      }
-    }
-    if (gameOver) {
-      console.log('[CLIENT] Game over message:', message);
-      setResultModal({ message});
-    }
-  });
-
-  return () => {
-    socket.off('updateBoard');
+  const transformBoardData = (boardData) => {
+    return boardData.map((row) =>
+      row.map((cell) => {
+        if (!cell) return null;
+        return `${cell.color}${cell.type.toUpperCase()}`;
+      })
+    );
   };
-}, [socket, playerColor]);
+
+
+  useEffect(() => {
+    const handleUpdateBoard = ({ board: fen, currentTurn, move, capturedPiece, gameOver, message }) => {
+      console.log('[CLIENT] Update received:', { fen, move, currentTurn, capturedPiece });
+      const newChess = new Chess();
+      newChess.load(fen);
+      setChess(newChess);
+      setBoard(transformBoardData(newChess.board()));
+      setIsMyTurn(currentTurn === playerColor);
+
+      if (move) {
+        setLastMove(move);
+      }
+
+      if (capturedPiece) {
+        if (currentTurn === playerColor) {
+          setCapturedByPlayer((prev) => [...prev, capturedPiece]);
+        } else {
+          setCapturedByOpponent((prev) => [...prev, capturedPiece]);
+        }
+      }
+
+      if (gameOver) {
+        setResultModal({ message });
+      }
+    };
+
+    // Подписываемся на событие updateBoard
+    socket.on('updateBoard', handleUpdateBoard);
+
+    return () => {
+      socket.off('updateBoard', handleUpdateBoard); // Очищаем предыдущий слушатель
+    };
+  }, [gameId, playerColor]); // Добавляем зависимость от gameId
+
 
 
   const renderPiece = (piece) => {
@@ -179,19 +181,20 @@ useEffect(() => {
   // Обработка кнопки "Сдаться"
   const handleSurrender = () => {
     toggleModal(); // Закрываем модальное окно
-    const winner = playerColor === 'white' ? 'Opponent (Black)' : 'Opponent (White)';
     socket.emit('surrender', { gameId });
   };
 
-useEffect(() => {
-  // Слушаем событие окончания игры
-  socket.on('gameEnded', ({ message }) => {
-    setResultModal({ message }); // Используем данные с сервера
-    setTimeLeft({ white: null, black: null }); // Сбрасываем таймер
-  });
+  useEffect(() => {
+    // Слушаем событие окончания игры
+    socket.on('gameEnded', ({ message }) => {
+      setResultModal({ message }); // Используем данные с сервера
+      
 
-  return () => socket.off('gameEnded');
-}, [resetGame]);
+      setTimeLeft({ white: null, black: null }); // Сбрасываем таймер
+    });
+
+    return () => socket.off('gameEnded');
+  }, [resetGame]);
 
   // Обработка кнопки "Предложить ничью"
   const handleOfferDraw = () => {
@@ -235,58 +238,126 @@ useEffect(() => {
     }, [gameId]);
 
   const handleRematchRequest = () => {
-  socket.emit('requestRematch', { gameId, playerColor });
-  setResultModal(null); // Закрываем модальное окно
-};
-
-const handleExitToMenu = () => {
-  resetGame(); // Вызываем сброс игры
-  setResultModal(null); // Закрываем модальное окно
-};
-
-  const [opponentDisconnectTimer, setOpponentDisconnectTimer] = useState(null);
-
-
-useEffect(() => {
-  let interval;
-
-  const startCountdown = (timeout) => {
-    let countdown = timeout;
-    setOpponentDisconnectTimer(countdown);
-
-    interval = setInterval(() => {
-      countdown -= 1;
-      if (countdown <= 0) {
-        clearInterval(interval);
-        setOpponentDisconnectTimer(null); // Таймер завершился
-      } else {
-        setOpponentDisconnectTimer(countdown); // Уменьшаем значение
-      }
-    }, 1000);
+    socket.emit('requestRematch', { gameId, playerColor });
+    showAlert('Запрос на реванш отправлен');
   };
 
-  socket.on('opponentDisconnected', ({ timeout }) => {
-    clearInterval(interval); // Удаляем старый таймер, если он был
-    startCountdown(timeout);
+  useEffect(() => {
+    socket.on('rematchRequested', ({ message }) => {
+      setRematch(true);
+      showAlert(message); // Уведомление о запросе реванша
+    });
+
+    return () => {
+      socket.off('rematchRequested');
+    };
+  }, []);
+
+
+  useEffect(() => {
+    socket.on('rematchAccepted', ({ newGameId, color }) => {
+      updateGameDetails(newGameId, color); // Обновляем gameId и цвет игрока
+      setChess(new Chess()); // Сбрасываем шахматную доску
+      setBoard(initialBoard); // Устанавливаем начальную доску
+      setCapturedByPlayer([]);
+      setCapturedByOpponent([]);
+      setResultModal(null); // Закрываем модальное окно
+      setRematch(null);
+      showAlert('Реванш начался!');
+    });
+
+    return () => {
+      socket.off('rematchAccepted');
+    };
+  }, [updateGameDetails]);
+
+
+  const handleAcceptRematch = () => {
+    socket.emit('acceptRematch', { gameId, playerColor });
+    setResultModal(null);
+    setRematch(null);
+  };
+
+  const handleRejectRematch = () => {
+    socket.emit('rejectRematch', { gameId });
+    showAlert('Вы отклонили реванш');
+    setResultModal(null);
+  };
+
+
+  const handleExitToMenu = () => {
+    resetGame(); 
+    setResultModal(null);
+    setRematch(null);
+  };
+
+  useEffect(() => {
+    let interval;
+
+    const startCountdown = (timeout) => {
+      let countdown = timeout;
+      setOpponentDisconnectTimer(countdown);
+
+      interval = setInterval(() => {
+        countdown -= 1;
+        if (countdown <= 0) {
+          clearInterval(interval);
+          setOpponentDisconnectTimer(null); // Таймер завершился
+        } else {
+          setOpponentDisconnectTimer(countdown); // Уменьшаем значение
+        }
+      }, 1000);
+    };
+
+    socket.on('opponentDisconnected', ({ timeout }) => {
+      clearInterval(interval); // Удаляем старый таймер, если он был
+      startCountdown(timeout);
+    });
+
+    return () => {
+      socket.off('opponentDisconnected');
+      clearInterval(interval);
+    };
+  }, []);
+const [userRank, setUserRank] = useState(); // Рейтинг игрока по умолчанию
+const [opponentRank, setOpponentRank] = useState(); // Рейтинг оппонента по умолчанию
+
+  useEffect(() => {
+  const fetchRating = async (id, setRating) => {
+    try {
+      const response = await axios.get(`https://chess-battle.space/api/users/get_rating/${id}`);
+      setRating(response.data.rating);
+    } catch (error) {
+      console.error('Ошибка при получении рейтинга:', error);
+    }
+  };
+
+  if (userId) {
+    fetchRating(userId, setUserRank);
+  }
+
+  socket.on('opponentInfo', ({ opponentId }) => {
+    fetchRating(opponentId, setOpponentRank); // Запрашиваем рейтинг оппонента
   });
 
   return () => {
-    socket.off('opponentDisconnected');
-    clearInterval(interval);
+    socket.off('opponentInfo');
   };
-}, []);
+}, [userId]);
 
 
   return (
       <div className="game-board-container">
-        <PlayerInfo
+       <PlayerInfo
           avatar={opponentAvatar}
           nickname="Opponent"
-          rank={432}
+          rank={opponentRank}
           timeLeft={timeLeft?.[playerColor === 'white' ? 'black' : 'white'] || 0}
           capturedPieces={capturedByOpponent} // Оппонент захватил фигуры
           isOpponent={true}
           disconnectCountdown={opponentDisconnectTimer} // Передаем таймер отключения
+          socket={socket}
+          gameId={gameId}
         />
           <ChessBoard
             board={board}
@@ -300,22 +371,28 @@ useEffect(() => {
           <PlayerInfo
             avatar={userAvatar}
             nickname="You"
-            rank={432}
+            rank={userRank}
             timeLeft={timeLeft?.[playerColor] || 0}
             capturedPieces={capturedByPlayer} // Игрок захватил фигуры
             isOpponent={false}
+            socket={socket}
+            gameId={gameId}
           />
+
         {/* Кнопка с тремя точками */}
         <button className="three-dots-button" onClick={toggleModal}>
           &#x2022;&#x2022;&#x2022;
         </button>
         
         {resultModal && (
-          <ResultModal
-            message={resultModal.message}
-            onRematch={handleRematchRequest}
-            onExit={handleExitToMenu}
-          />
+        <ResultModal
+          message={resultModal.message}
+          onRematch={handleRematchRequest}
+          onAcceptRematch={handleAcceptRematch}
+          onRejectRematch={handleRejectRematch}
+          onExit={handleExitToMenu}
+          isRematchRequested={isRematchRequested}
+        />
         )}
         {showModal && (
           <Modal

@@ -6,8 +6,9 @@ import GameBoard from '../GameBoard/GameBoard';
 import Invitation from './Invitation/Invitation';
 import ButtonGroup from './ButtonGroup/ButtonGroup';
 import TimeSelection from './TimeSelection/TimeSelection';
+import axios from 'axios';
 
-const Lobby = ({ setBottomNavVisible }) => {
+const Lobby = ({ setBottomNavVisible, resetLobbyState }) => {
   const [gameId, setGameId] = useState(sessionStorage.getItem('gameId') || null);
   const [playerJoined, setPlayerJoined] = useState(sessionStorage.getItem('playerJoined') === 'true');
   const [invitationLink, setInvitationLink] = useState('');
@@ -18,6 +19,45 @@ const Lobby = ({ setBottomNavVisible }) => {
   const [isWaitingForOpponent, setIsWaitingForOpponent] = useState(false);
   const navigate = useNavigate();
   const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  // Сброс состояния при изменении resetLobbyState
+  useEffect(() => {
+    if (resetLobbyState) {
+      sessionStorage.removeItem('gameId');
+      sessionStorage.removeItem('playerJoined');
+      setGameId(null);
+      setPlayerJoined(false);
+      setWaitingMessage('');
+      setInvitationLink('');
+      setIsRandomGame(false);
+      setIsWaitingForOpponent(false);
+      setShowTimeSelection(false);
+    }
+  }, [resetLobbyState]);
+
+    // Добавляем пользователя в базу данных
+  const addUserToDatabase = async () => {
+    if (!userId) return;
+
+    try {
+      // Отправляем запрос на сервер для проверки и добавления пользователя
+      await axios.post('/api/users/check-or-add-user', {
+        telegram_id: userId, // Уникальный идентификатор пользователя Telegram
+        username: window.Telegram.WebApp?.initDataUnsafe?.user?.username || 'unknown',
+        first_name: window.Telegram.WebApp?.initDataUnsafe?.user?.first_name || 'unknown',
+        last_name: window.Telegram.WebApp?.initDataUnsafe?.user?.last_name || 'unknown',
+        avatar_url: window.Telegram.WebApp?.initDataUnsafe?.user?.photo_url || null,
+      });
+
+      console.log('User checked/added successfully.');
+    } catch (error) {
+      console.error('Error adding user to the database:', error);
+    }
+  };
+
+  // Выполняем добавление пользователя при первом рендере
+  useEffect(() => {
+    addUserToDatabase();
+  }, [userId]);
 
  useEffect(() => {
     const storedGameId = sessionStorage.getItem('gameId');
@@ -119,7 +159,7 @@ const Lobby = ({ setBottomNavVisible }) => {
     socket.emit('createGame', { id, time, userId });
 
     if (isRandom) {
-      setWaitingMessage('Ожидание другого игрока...');
+      setWaitingMessage('Waiting for opponent...');
       setIsWaitingForOpponent(true);
     } else {
       const link = `https://t.me/Chess_Battle_Bot/startapp?startapp=${id}`;
@@ -157,12 +197,12 @@ const Lobby = ({ setBottomNavVisible }) => {
   const copyToClipboard = () => {
     try {
       navigator.clipboard.writeText(invitationLink).then(() => {
-        alert('Ссылка скопирована');
+        alert('Link copied');
       }).catch(() => {
-        alert('Не удалось скопировать. Скопируйте ссылку вручную: ' + invitationLink);
+        alert('Failed to copy. Please copy the link manually: ' + invitationLink);
       });
     } catch (error) {
-      alert('Не удалось скопировать. Скопируйте ссылку вручную: ' + invitationLink);
+      alert('Failed to copy. Please copy the link manually: ' + invitationLink);
     }
   };
 
@@ -173,11 +213,11 @@ const Lobby = ({ setBottomNavVisible }) => {
   const handleInviteClick = () => {
     if (gameId) {
       const url = `https://t.me/Chess_Battle_Bot/startapp?startapp=${gameId}`;
-      const text = 'Присоединяйся к игре!';
+      const text = 'Join the game bro!';
       const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
       window.open(shareUrl, '_blank');
     } else {
-      alert('Сначала создайте игру, чтобы поделиться приглашением.');
+      alert('First, create a game to share the invitation.');
     }
   };
 
@@ -205,7 +245,19 @@ const Lobby = ({ setBottomNavVisible }) => {
           <h2>{waitingMessage}</h2>
         </div>
       ) : gameId && playerJoined ? (
-        <GameBoard gameId={gameId} playerColor={color} resetGame={handleLeaveGame} />
+
+<GameBoard
+  gameId={gameId}
+  playerColor={color}
+  resetGame={handleLeaveGame}
+  updateGameDetails={(newGameId, newColor) => {
+    setGameId(newGameId); // Обновление gameId
+    setColor(newColor);   // Обновление цвета
+  }}
+/>
+
+
+        // <GameBoard gameId={gameId} playerColor={color} resetGame={handleLeaveGame} />
       ) : (
         <>
           {!isRandomGame && gameId ? (
