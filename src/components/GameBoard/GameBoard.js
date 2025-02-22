@@ -199,11 +199,11 @@ useEffect(() => {
   // Обработка кнопки "Предложить ничью"
   const handleOfferDraw = () => {
     toggleModal(); // Закрываем модальное окно
-    showAlert('Ничья предложена'); // Показ уведомления
+    showAlert('A draw has been offered.'); // Показ уведомления
 
     socket.emit('offerDraw', { gameId }, (response) => {
       if (response.status !== 'success') {
-        showAlert('Ошибка: Невозможно предложить ничью.');
+        showAlert('Error: Unable to offer a draw.');
       }
       });
     };
@@ -216,7 +216,7 @@ useEffect(() => {
   const handleRejectDraw = () => {
     setDrawOfferModal(null); // Закрываем модальное окно
     socket.emit('rejectDraw', { gameId });
-    showAlert('Вы отклонили ничью.');
+    showAlert('You declined the draw.');
   };
 
 
@@ -239,7 +239,7 @@ useEffect(() => {
 
   const handleRematchRequest = () => {
     socket.emit('requestRematch', { gameId, playerColor });
-    showAlert('Запрос на реванш отправлен');
+    showAlert('The rematch request has been sent.');
   };
 
   useEffect(() => {
@@ -263,7 +263,7 @@ useEffect(() => {
       setCapturedByOpponent([]);
       setResultModal(null); // Закрываем модальное окно
       setRematch(null);
-      showAlert('Реванш начался!');
+      showAlert('The rematch has started!');
     });
 
     return () => {
@@ -280,7 +280,7 @@ useEffect(() => {
 
   const handleRejectRematch = () => {
     socket.emit('rejectRematch', { gameId });
-    showAlert('Вы отклонили реванш');
+    showAlert('You declined the rematch.');
     setResultModal(null);
   };
 

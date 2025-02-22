@@ -6,6 +6,7 @@ import Profile from './components/Profile/Profile';
 import BottomNav from './components/BottomNav/BottomNav';
 import SplashScreen from './components/SplashScreen/SplashScreen';
 import './App.css';
+import MarketPlace from './components/MarketPlace/MarketPlace';
 
 function App() {
   const [isSplashVisible, setIsSplashVisible] = useState(false);
@@ -47,6 +48,8 @@ function App() {
             />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/marketplace" element={<MarketPlace />} />
+
           </Routes>
           {isBottomNavVisible && <BottomNav />}
         </>
